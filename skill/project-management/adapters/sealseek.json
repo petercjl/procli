@@ -1,0 +1,398 @@
+{
+  "schema": "portable-skill-adapter",
+  "schema_version": "1.0.0",
+  "platform": "sealseek",
+  "mappings": [
+    {
+      "capability_id": "project.service.task.update",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve the bundled procli from PATH.", "execution": "Run task update-context, preview, write, and task readback.", "normalization": "Use procli JSON."},
+      "features": ["compact_prewrite_snapshot", "server_dry_run", "project_scoped_optimistic_concurrency", "idempotent_write", "post_write_readback"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access"],
+      "normalization": "Use procli JSON."
+    },
+    {
+      "capability_id": "project.service.task.action",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve the bundled procli from PATH.", "execution": "Run task update-context then preview and execute start, submit, approve, or reject.", "normalization": "Use procli JSON."},
+      "features": ["server_dry_run", "evidence_validation", "reviewer_authorization", "notification_outbox", "post_write_readback"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access", "Assigned reviewer for approval or rejection"],
+      "normalization": "Use procli JSON."
+    },
+    {
+      "capability_id": "project.service.run.finish",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve the bundled procli from PATH.", "execution": "Start a run, ingest or upload deliverable, read finish-context, preview finish, write and read back.", "normalization": "Use procli JSON."},
+      "features": ["server_dry_run", "linked_deliverable", "project_scoped_optimistic_concurrency", "post_write_readback"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access"],
+      "normalization": "Use procli JSON."
+    },
+    {
+      "capability_id": "project.service.knowledge.source-check",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve procli and official dws from PATH.", "execution": "Read source-context, fetch the live document with dws, compare hashes, preview, write and read back.", "normalization": "Use procli JSON."},
+      "features": ["official_dws_readback", "server_dry_run", "project_scoped_optimistic_concurrency", "post_write_readback"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access", "Official dws document read access"],
+      "normalization": "Use procli JSON."
+    },
+    {
+      "capability_id": "project.service.knowledge.index",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve procli from PATH and verify capabilities.", "execution": "Run procli knowledge index with exact project and optional node.", "normalization": "Use the procli JSON envelope."},
+      "features": ["profile_selection", "target_identity_verification", "read_only", "node_folders", "analysis_timeline", "structured_json"],
+      "status": "implemented",
+      "permissions": ["Authenticated project read access"],
+      "normalization": "Use the procli JSON envelope."
+    },
+    {
+      "capability_id": "project.service.knowledge.reindex",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve procli from PATH and verify capabilities.", "execution": "Run procli knowledge reindex with fresh context token, preview, write, and index readback.", "normalization": "Use the procli JSON envelope."},
+      "features": ["profile_selection", "target_identity_verification", "server_dry_run", "project_scoped_optimistic_concurrency", "idempotent_write", "node_folders", "analysis_timeline", "post_write_readback", "structured_json"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access"],
+      "normalization": "Use the procli JSON envelope."
+    },
+    {
+      "capability_id": "project.service.knowledge.context",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve procli from PATH and verify version and capabilities.", "execution": "Run procli knowledge context with exact project and task names.", "normalization": "Use the procli JSON envelope."},
+      "features": ["profile_selection", "target_identity_verification", "read_only", "compact_prewrite_snapshot", "structured_json"],
+      "status": "implemented",
+      "permissions": ["Authenticated project read access"],
+      "normalization": "Use the procli JSON envelope."
+    },
+    {
+      "capability_id": "project.service.knowledge.ingest",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve procli from PATH and verify version and capabilities.", "execution": "Run procli knowledge ingest after official dws document readback, preview, write, and readback.", "normalization": "Use the procli JSON envelope."},
+      "features": ["profile_selection", "target_identity_verification", "compact_prewrite_snapshot", "server_dry_run", "project_scoped_optimistic_concurrency", "idempotent_write", "immutable_source_snapshot", "knowledge_relation", "compiled_page", "post_write_readback", "structured_json"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access", "Separately authorized official dws document access"],
+      "normalization": "Use the procli JSON envelope."
+    },
+    {
+      "capability_id": "project.service.knowledge.query",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve procli from PATH and verify version and capabilities.", "execution": "Run procli knowledge query; node default reads the cumulative page and --reports reads source reports.", "normalization": "Use the procli JSON envelope."},
+      "features": ["profile_selection", "target_identity_verification", "read_only", "compiled_content", "source_provenance", "structured_json"],
+      "status": "implemented",
+      "permissions": ["Authenticated project read access"],
+      "normalization": "Use the procli JSON envelope."
+    },
+    {
+      "capability_id": "project.service.knowledge.compile",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve procli from PATH and verify version and capabilities.", "execution": "Read compile-context and all source reports, preview procli knowledge compile, write with one idempotency key, and verify the cumulative page by query.", "normalization": "Use the procli JSON envelope."},
+      "features": ["profile_selection", "target_identity_verification", "compact_prewrite_snapshot", "server_dry_run", "project_scoped_optimistic_concurrency", "source_set_validation", "source_citations", "prior_version_archive", "update_log", "idempotent_write", "post_write_readback", "structured_json"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access"],
+      "normalization": "Use the procli JSON envelope."
+    },
+    {
+      "capability_id": "project.service.directory.list",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Run procli directory list against the selected Profile.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "folder_project_relationships",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated read access"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.task.list",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Run procli task list with an exact project name.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "exact_project_name_resolution",
+        "complete_task_nodes",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated read access"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.task.read",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Compose procli directory list and task list to resolve natural-language folder, project, stage, skill, and task references; clarify non-unique candidates; then run procli task get with the resolved exact project and task names.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "exact_project_name_resolution",
+        "exact_task_name_resolution",
+        "natural_language_project_resolution",
+        "folder_as_project_context",
+        "natural_language_task_resolution",
+        "ambiguity_clarification",
+        "status_history",
+        "related_records",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated read access"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.node.create",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Run node create-context, preview the exact node and position, write with the same context token and idempotency key, and verify by exact-name readback.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "exact_project_resolution",
+        "exact_node_reference_resolution",
+        "server_dry_run",
+        "project_scoped_optimistic_concurrency",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated permission to add a project node"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.node.delete",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Read and preview the exact node deletion impact, obtain exact-name confirmation, execute recoverable deletion, and verify the node-scoped recycle batch.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "impact_preview",
+        "exact_name_confirmation",
+        "project_scoped_optimistic_concurrency",
+        "dependency_policy",
+        "administrator_content_deletion",
+        "recoverable_archive",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated node deletion permission and administrator permission for content-bearing nodes"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.node.restore",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Read the node recycle batch, preview conflicts, obtain exact-name confirmation, restore it, and verify the node by exact-name readback.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "restore_preview",
+        "exact_name_confirmation",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated node restore permission"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.task.create",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Resolve the exact project, run procli task create-context, compose exact task inputs from the returned snapshot, then run procli task create with one context token and idempotency key through preview, write, and readback.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "exact_project_resolution",
+        "exact_node_resolution",
+        "member_and_task_reference_resolution",
+        "server_dry_run",
+        "project_scoped_optimistic_concurrency",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated permission to add a task"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.task.delete",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Resolve the exact project and task, preview deletion, obtain exact-name confirmation, execute recoverable deletion, and verify the recycle batch.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "impact_preview",
+        "exact_name_confirmation",
+        "project_scoped_optimistic_concurrency",
+        "dependency_policy",
+        "recoverable_archive",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated task deletion permission"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.trash.list",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Run procli trash list or trash get against the selected Profile.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "manifest_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated read access"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.task.restore",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Read the recycle batch, preview restoration, obtain exact-name confirmation, execute restore, and verify the task by ID.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "restore_preview",
+        "exact_name_confirmation",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Authenticated task restore permission"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.project.create",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Run procli project create with the selected Profile, optional custom SOP file, one idempotency key, preview and required confirmation.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "dry_run",
+        "production_confirmation",
+        "idempotent_write",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "Permission to create a project"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    },
+    {
+      "capability_id": "project.service.project.delete",
+      "implementation": {
+        "kind": "stable-cli",
+        "discovery": "Resolve procli from PATH and verify it with procli version and procli capabilities --json.",
+        "execution": "Run procli project delete with exact-name confirmation, one idempotency key, preview, explicit --yes, and administrator authorization.",
+        "normalization": "Use the procli JSON envelope without reinterpretation."
+      },
+      "features": [
+        "profile_selection",
+        "target_identity_verification",
+        "dry_run",
+        "admin_authorization",
+        "exact_name_confirmation",
+        "idempotent_write",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "status": "implemented",
+      "permissions": [
+        "Network access to the selected service",
+        "System administrator permission to delete a project"
+      ],
+      "normalization": "Use the procli JSON envelope without reinterpretation."
+    }
+  ]
+}

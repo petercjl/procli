@@ -1,0 +1,419 @@
+{
+  "schemaVersion": "1",
+  "name": "procli",
+  "version": "0.6.0",
+  "defaultProfile": "nas",
+  "capabilities": [
+    {
+      "id": "directory.list",
+      "command": "procli directory list",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": [],
+      "optionalInputs": ["profile"],
+      "supports": ["targetVerification", "structuredJson"]
+    },
+    {
+      "id": "task.list",
+      "command": "procli task list",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project"],
+      "optionalInputs": ["profile"],
+      "supports": [
+        "projectNameResolution",
+        "targetVerification",
+        "structuredJson"
+      ]
+    },
+    {
+      "id": "task.get",
+      "command": "procli task get",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project", "task"],
+      "optionalInputs": ["profile"],
+      "supports": [
+        "projectNameResolution",
+        "taskNameResolution",
+        "statusHistory",
+        "relatedRecords",
+        "targetVerification",
+        "structuredJson"
+      ]
+    },
+    {
+      "id": "knowledge.context",
+      "command": "procli knowledge context",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project", "task"],
+      "optionalInputs": ["profile"],
+      "supports": ["compactStateSnapshot", "projectScopedVersion", "contextToken", "structuredJson"]
+    },
+    {
+      "id": "knowledge.source-check",
+      "command": "procli knowledge source-check",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "knowledgeId", "contextToken"],
+      "optionalInputs": ["profile", "idempotencyKey"],
+      "supports": ["officialDwsReadback", "contentHashComparison", "serverDryRun", "projectScopedOptimisticConcurrency", "idempotency", "postWriteReadback", "structuredJson"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "knowledge.index",
+      "command": "procli knowledge index",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project"],
+      "optionalInputs": ["node", "profile"],
+      "supports": ["nodeFolders", "platformGroups", "analysisTimeline", "queryRoutes", "structuredJson"]
+    },
+    {
+      "id": "knowledge.reindex",
+      "command": "procli knowledge reindex",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "contextToken"],
+      "optionalInputs": ["profile", "idempotencyKey"],
+      "supports": ["serverDryRun", "projectScopedOptimisticConcurrency", "idempotency", "nodeFolders", "analysisTimeline", "queryRoutes", "postWriteReadback", "structuredJson"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "knowledge.ingest",
+      "command": "procli knowledge ingest",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "task", "title", "sourceNode", "sourceUrl", "sourceVersion", "file", "wikiFile", "contextToken"],
+      "optionalInputs": ["profile", "workspace", "analysisDate", "platform", "topics", "idempotencyKey"],
+      "supports": ["serverDryRun", "projectScopedOptimisticConcurrency", "idempotency", "knowledgeRelations", "immutableSourceSnapshot", "independentCompiledPage", "nodeFolder", "platformGrouping", "timelineLinks", "topicLinks", "postWriteReadback", "structuredJson"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "knowledge.compile",
+      "command": "procli knowledge compile",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "node", "file", "sourceIds", "changeSummary", "contextToken"],
+      "optionalInputs": ["profile", "currentVersion", "idempotencyKey"],
+      "supports": ["compactPrewriteSnapshot", "serverDryRun", "projectScopedOptimisticConcurrency", "sourceSetValidation", "sourceCitations", "priorVersionArchive", "updateLog", "idempotency", "postWriteReadback", "structuredJson"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "knowledge.query",
+      "command": "procli knowledge query",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project"],
+      "optionalInputs": ["node", "task", "platform", "topic", "from", "to", "q", "profile"],
+      "supports": ["taskRelation", "compiledContent", "sourceProvenance", "analysisTimeline", "relatedKnowledge", "structuredJson"]
+    },
+    {
+      "id": "node.create-context",
+      "command": "procli node create-context",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project"],
+      "optionalInputs": ["profile"],
+      "supports": [
+        "compactStateSnapshot",
+        "projectScopedVersion",
+        "contextToken",
+        "structuredJson"
+      ]
+    },
+    {
+      "id": "node.create",
+      "command": "procli node create",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "name", "contextToken"],
+      "optionalInputs": [
+        "beforeNode",
+        "afterNode",
+        "profile",
+        "idempotencyKey"
+      ],
+      "supports": [
+        "prewriteContextSnapshot",
+        "serverDryRun",
+        "optimisticConcurrency",
+        "projectScopedVersion",
+        "idempotency",
+        "exactNodeResolution",
+        "orderedInsertion",
+        "postWriteReadback",
+        "structuredJson"
+      ],
+      "productionConfirmation": true
+    },
+    {
+      "id": "node.delete-context",
+      "command": "procli node delete-context",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project", "node"],
+      "optionalInputs": ["profile"],
+      "supports": [
+        "compactStateSnapshot",
+        "impactHash",
+        "contentPermission",
+        "structuredJson"
+      ]
+    },
+    {
+      "id": "node.delete",
+      "command": "procli node delete",
+      "effect": "recoverable-delete",
+      "risk": "high",
+      "requiredInputs": ["project", "node", "confirmNode"],
+      "optionalInputs": ["dependencyPolicy", "profile", "idempotencyKey"],
+      "supports": [
+        "serverDryRun",
+        "exactNameConfirmation",
+        "projectScopedOptimisticConcurrency",
+        "impactHash",
+        "dependencyPolicy",
+        "administratorContentDeletion",
+        "idempotency",
+        "recoverableDeletion",
+        "postWriteReadback",
+        "structuredJson"
+      ],
+      "productionConfirmation": true,
+      "confirmationRequired": true
+    },
+    {
+      "id": "node.restore",
+      "command": "procli node restore",
+      "effect": "write",
+      "risk": "high",
+      "requiredInputs": ["deletionId", "confirmNode"],
+      "optionalInputs": ["profile", "idempotencyKey"],
+      "supports": [
+        "dryRun",
+        "exactNameConfirmation",
+        "idempotency",
+        "postWriteReadback",
+        "structuredJson"
+      ],
+      "productionConfirmation": true,
+      "confirmationRequired": true
+    },
+    {
+      "id": "task.create-context",
+      "command": "procli task create-context",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project"],
+      "optionalInputs": ["profile"],
+      "supports": [
+        "projectNameResolution",
+        "targetVerification",
+        "compactStateSnapshot",
+        "projectScopedVersion",
+        "contextToken",
+        "structuredJson"
+      ]
+    },
+    {
+      "id": "task.update",
+      "command": "procli task update",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "task", "contextToken", "taskVersion"],
+      "optionalInputs": ["owner", "reviewer", "dueDate", "priority", "description", "criteria", "progress", "idempotencyKey"],
+      "supports": ["compactStateSnapshot", "serverDryRun", "projectScopedOptimisticConcurrency", "idempotency", "postWriteReadback"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "task.action",
+      "command": "procli task start|submit|approve|reject",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "task", "contextToken", "taskVersion"],
+      "optionalInputs": ["reason", "idempotencyKey"],
+      "supports": ["serverDryRun", "dependencyValidation", "evidenceValidation", "reviewerAuthorization", "notificationOutbox", "postWriteReadback"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "run.start-finish",
+      "command": "procli run start|finish",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "task", "contextToken", "taskVersion", "skill"],
+      "optionalInputs": ["runId", "runVersion", "status", "output", "knowledgeId", "artifactId", "idempotencyKey"],
+      "supports": ["serverDryRun", "evidenceRelationValidation", "projectScopedOptimisticConcurrency", "idempotency", "postWriteReadback"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "artifact.upload",
+      "command": "procli artifact upload",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "task", "file", "contextToken", "taskVersion"],
+      "optionalInputs": ["idempotencyKey"],
+      "supports": ["serverDryRun", "sha256Validation", "projectScopedOptimisticConcurrency", "idempotency", "postWriteReadback"],
+      "productionConfirmation": true
+    },
+    {
+      "id": "notification.outbox",
+      "command": "procli notification list|bind|requeue|dispatch|worker",
+      "effect": "external-message",
+      "risk": "high",
+      "requiredInputs": ["adminAuthorization"],
+      "optionalInputs": ["identity", "profile"],
+      "supports": ["recipientBinding", "persistentOutbox", "deliveryLease", "boundedRetry", "unknownResultReview", "manualRequeue", "officialDwsDelivery"],
+      "confirmationRequired": true
+    },
+    {
+      "id": "task.create",
+      "command": "procli task create",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "node", "title", "contextToken"],
+      "optionalInputs": [
+        "description",
+        "criteria",
+        "owner",
+        "reviewer",
+        "priority",
+        "dueDate",
+        "dependsOn",
+        "beforeTask",
+        "afterTask",
+        "profile",
+        "idempotencyKey"
+      ],
+      "supports": [
+        "prewriteContextSnapshot",
+        "serverDryRun",
+        "optimisticConcurrency",
+        "projectScopedVersion",
+        "idempotency",
+        "exactNodeResolution",
+        "exactTaskReferenceResolution",
+        "postWriteReadback",
+        "structuredJson"
+      ],
+      "productionConfirmation": true
+    },
+    {
+      "id": "task.delete-context",
+      "command": "procli task delete-context",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["project", "task"],
+      "optionalInputs": ["profile"],
+      "supports": [
+        "compactStateSnapshot",
+        "projectScopedVersion",
+        "contextToken",
+        "impactHash",
+        "structuredJson"
+      ]
+    },
+    {
+      "id": "task.delete",
+      "command": "procli task delete",
+      "effect": "recoverable-delete",
+      "risk": "high",
+      "requiredInputs": ["project", "task", "confirmTask"],
+      "optionalInputs": [
+        "dependencyPolicy",
+        "rewireTo",
+        "profile",
+        "idempotencyKey"
+      ],
+      "supports": [
+        "serverDryRun",
+        "exactNameConfirmation",
+        "projectScopedOptimisticConcurrency",
+        "impactHash",
+        "dependencyPolicy",
+        "idempotency",
+        "recoverableDeletion",
+        "postWriteReadback",
+        "structuredJson"
+      ],
+      "productionConfirmation": true,
+      "confirmationRequired": true
+    },
+    {
+      "id": "trash.list",
+      "command": "procli trash list",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": [],
+      "optionalInputs": ["project", "profile"],
+      "supports": ["structuredJson"]
+    },
+    {
+      "id": "trash.get",
+      "command": "procli trash get",
+      "effect": "read",
+      "risk": "low",
+      "requiredInputs": ["deletionId"],
+      "optionalInputs": ["profile"],
+      "supports": ["manifest", "structuredJson"]
+    },
+    {
+      "id": "task.restore",
+      "command": "procli task restore",
+      "effect": "write",
+      "risk": "high",
+      "requiredInputs": ["deletionId", "confirmTask"],
+      "optionalInputs": ["profile", "idempotencyKey"],
+      "supports": [
+        "dryRun",
+        "exactNameConfirmation",
+        "idempotency",
+        "postWriteReadback",
+        "structuredJson"
+      ],
+      "productionConfirmation": true,
+      "confirmationRequired": true
+    },
+    {
+      "id": "project.create",
+      "command": "procli project create",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["name"],
+      "optionalInputs": [
+        "goal",
+        "type",
+        "template",
+        "sopFile",
+        "mode",
+        "profile",
+        "idempotencyKey"
+      ],
+      "supports": [
+        "dryRun",
+        "idempotency",
+        "targetVerification",
+        "postWriteReadback"
+      ],
+      "productionConfirmation": true
+    },
+    {
+      "id": "project.delete",
+      "command": "procli project delete",
+      "effect": "soft-delete",
+      "risk": "high",
+      "requiredInputs": ["name", "confirmName", "yes"],
+      "optionalInputs": ["profile", "idempotencyKey"],
+      "supports": [
+        "dryRun",
+        "idempotency",
+        "targetVerification",
+        "postWriteReadback",
+        "recoverableDeletion"
+      ],
+      "requiredSystemRole": "admin",
+      "confirmationRequired": true
+    }
+  ]
+}

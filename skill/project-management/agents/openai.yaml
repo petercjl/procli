@@ -1,0 +1,6 @@
+interface:
+  display_name: "项目管理"
+  short_description: "用 procli 自然语言查询并安全管理项目"
+  default_prompt: "Use procli to resolve natural-language project and task references, then inspect or manage the selected project."
+policy:
+  allow_implicit_invocation: true

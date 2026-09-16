@@ -1,0 +1,594 @@
+{
+  "schema": "portable-skill-capabilities",
+  "schema_version": "1.0.0",
+  "skill": "project-management",
+  "target_platforms": ["codex", "sealseek"],
+  "capabilities": [
+    {
+      "id": "project.service.task.update",
+      "purpose": "Edit task metadata and in-progress percentage from a fresh task snapshot",
+      "required": true,
+      "required_features": ["compact_prewrite_snapshot", "server_dry_run", "project_scoped_optimistic_concurrency", "idempotent_write", "post_write_readback"],
+      "input_fields": ["profile", "project", "task", "context_token", "task_version", "patch"],
+      "output_fields": ["target", "project", "task", "changes", "verification"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "Authenticated task update; production requires --yes."},
+      "errors": ["PROJECT_STATE_CHANGED", "TASK_STATE_CHANGED", "MEMBER_AMBIGUOUS", "OUTPUT_CONTRACT_FAILED"]
+    },
+    {
+      "id": "project.service.task.action",
+      "purpose": "Start, submit, approve, or reject a task with dependency, evidence, and reviewer checks",
+      "required": true,
+      "required_features": ["server_dry_run", "evidence_validation", "reviewer_authorization", "notification_outbox", "post_write_readback"],
+      "input_fields": ["profile", "project", "task", "context_token", "task_version", "action", "reason"],
+      "output_fields": ["target", "project", "task", "action", "verification"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "Authenticated task action; approval and rejection require the assigned reviewer."},
+      "errors": ["PROJECT_STATE_CHANGED", "EVIDENCE_REQUIRED", "REVIEWER_REQUIRED", "INVALID_TRANSITION"]
+    },
+    {
+      "id": "project.service.run.finish",
+      "purpose": "Record an Agent execution with a linked knowledge or file deliverable",
+      "required": true,
+      "required_features": ["server_dry_run", "linked_deliverable", "project_scoped_optimistic_concurrency", "post_write_readback"],
+      "input_fields": ["profile", "project", "task", "run_id", "context_token", "task_version", "run_version", "status", "output", "knowledge_id", "artifact_id"],
+      "output_fields": ["target", "project", "task", "run", "verification"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "Authenticated Agent run recording; production requires --yes."},
+      "errors": ["PROJECT_STATE_CHANGED", "RUN_STATE_CHANGED", "EVIDENCE_REQUIRED", "EVIDENCE_NOT_FOUND"]
+    },
+    {
+      "id": "project.service.knowledge.source-check",
+      "purpose": "Read the live DingTalk source via official dws and mark the compiled source current or stale by content hash",
+      "required": true,
+      "required_features": ["official_dws_readback", "server_dry_run", "project_scoped_optimistic_concurrency", "post_write_readback"],
+      "input_fields": ["profile", "project", "knowledge_id", "context_token"],
+      "output_fields": ["target", "knowledgeId", "syncStatus", "lastCheckedAt", "verification"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "Authenticated source-status update; DingTalk document is read-only."},
+      "errors": ["DWS_READ_FAILED", "PROJECT_STATE_CHANGED", "OUTPUT_CONTRACT_FAILED"]
+    },
+    {
+      "id": "project.service.directory.list",
+      "purpose": "Read the complete folder and active-project directory from the selected service",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "folder_project_relationships",
+        "structured_json"
+      ],
+      "input_fields": ["profile"],
+      "output_fields": ["target", "counts", "folders", "projects"],
+      "side_effects": {
+        "external_mutation": false,
+        "may_cost_money": false,
+        "authorization": "The authenticated user may read the shared company project directory."
+      },
+      "errors": ["AUTH_REQUIRED", "NOT_FOUND", "PROVIDER_FAILURE"]
+    },
+    {
+      "id": "project.service.task.list",
+      "purpose": "Resolve one project by exact name and read all of its task nodes",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "exact_project_name_resolution",
+        "complete_task_nodes",
+        "structured_json"
+      ],
+      "input_fields": ["profile", "project"],
+      "output_fields": ["target", "project", "count", "tasks"],
+      "side_effects": {
+        "external_mutation": false,
+        "may_cost_money": false,
+        "authorization": "The authenticated user may read tasks in a visible company project."
+      },
+      "errors": ["AUTH_REQUIRED", "NOT_FOUND", "PROVIDER_FAILURE"]
+    },
+    {
+      "id": "project.service.task.read",
+      "purpose": "Resolve one project and task node by exact name and read its full state and related records",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "exact_project_name_resolution",
+        "exact_task_name_resolution",
+        "natural_language_project_resolution",
+        "folder_as_project_context",
+        "natural_language_task_resolution",
+        "ambiguity_clarification",
+        "status_history",
+        "related_records",
+        "structured_json"
+      ],
+      "input_fields": ["profile", "project", "task"],
+      "output_fields": [
+        "target",
+        "project",
+        "task",
+        "dependencies",
+        "dependents",
+        "status_history",
+        "records"
+      ],
+      "side_effects": {
+        "external_mutation": false,
+        "may_cost_money": false,
+        "authorization": "The authenticated user may read task state and records in a visible company project."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "NOT_FOUND",
+        "TASK_NAME_AMBIGUOUS",
+        "PROVIDER_FAILURE"
+      ]
+    },
+    {
+      "id": "project.service.knowledge.context",
+      "purpose": "Read the current project/task knowledge association and project-scoped write token",
+      "required": true,
+      "required_features": ["profile_selection", "target_identity_verification", "read_only", "compact_prewrite_snapshot", "structured_json"],
+      "input_fields": ["profile", "project", "task"],
+      "output_fields": ["target", "project", "task", "knowledge", "contextToken"],
+      "side_effects": {"external_mutation": false, "may_cost_money": false, "authorization": "Authenticated access to the selected project."},
+      "errors": ["AUTH_REQUIRED", "NOT_FOUND", "PROVIDER_FAILURE"]
+    },
+    {
+      "id": "project.service.knowledge.index",
+      "purpose": "Read node folders, platform groups, query routes, and dated knowledge entries without loading report bodies",
+      "required": true,
+      "required_features": ["profile_selection", "target_identity_verification", "read_only", "node_folders", "analysis_timeline", "structured_json"],
+      "input_fields": ["profile", "project", "node"],
+      "output_fields": ["target", "project", "indexPath", "queryPath", "topicIndexPath", "nodes"],
+      "side_effects": {"external_mutation": false, "may_cost_money": false, "authorization": "Authenticated access to the selected project."},
+      "errors": ["AUTH_REQUIRED", "NODE_NOT_FOUND", "PROVIDER_FAILURE"]
+    },
+    {
+      "id": "project.service.knowledge.reindex",
+      "purpose": "Rebuild project and node knowledge indexes, query routes, timelines, and canonical node-folder paths",
+      "required": true,
+      "required_features": ["profile_selection", "target_identity_verification", "server_dry_run", "project_scoped_optimistic_concurrency", "idempotent_write", "node_folders", "analysis_timeline", "post_write_readback", "structured_json"],
+      "input_fields": ["profile", "project", "context_token", "idempotency_key"],
+      "output_fields": ["target", "project", "nodeCount", "knowledgeCount", "indexPath", "queryPath", "topicIndexPath", "verification"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "User-authorized project Wiki maintenance; production requires --yes."},
+      "errors": ["AUTH_REQUIRED", "PROJECT_STATE_CHANGED", "OUTPUT_CONTRACT_FAILED"]
+    },
+    {
+      "id": "project.service.knowledge.ingest",
+      "purpose": "Associate a verified DingTalk document with one task, preserve its immutable source snapshot, and publish a separately authored human-and-Agent-readable Markdown knowledge page",
+      "required": true,
+      "required_features": ["profile_selection", "target_identity_verification", "compact_prewrite_snapshot", "server_dry_run", "project_scoped_optimistic_concurrency", "idempotent_write", "immutable_source_snapshot", "knowledge_relation", "compiled_page", "post_write_readback", "structured_json"],
+      "input_fields": ["profile", "project", "task", "title", "source_node", "source_url", "source_version", "file", "wiki_file", "analysis_date", "platform", "topics", "context_token", "idempotency_key"],
+      "output_fields": ["target", "project", "task", "knowledge", "snapshot", "verification"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "User-authorized project knowledge write; production requires --yes. DingTalk document creation uses separately authorized official dws."},
+      "errors": ["AUTH_REQUIRED", "PROJECT_STATE_CHANGED", "SOURCE_VERSION_CONFLICT", "KNOWLEDGE_TASK_CONFLICT", "KNOWLEDGE_ALREADY_CURRENT", "OUTPUT_CONTRACT_FAILED"]
+    },
+    {
+      "id": "project.service.knowledge.compile",
+      "purpose": "Maintain one source-cited, cumulative current knowledge page per project node while archiving prior compiled versions",
+      "required": true,
+      "required_features": ["profile_selection", "target_identity_verification", "compact_prewrite_snapshot", "server_dry_run", "project_scoped_optimistic_concurrency", "source_set_validation", "source_citations", "prior_version_archive", "update_log", "idempotent_write", "post_write_readback", "structured_json"],
+      "input_fields": ["profile", "project", "node", "file", "source_ids", "change_summary", "context_token", "current_version", "idempotency_key"],
+      "output_fields": ["target", "project", "node", "path", "version", "contentHash", "sourceCount", "verification"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "User-authorized project knowledge compilation; production requires --yes."},
+      "errors": ["AUTH_REQUIRED", "PROJECT_STATE_CHANGED", "KNOWLEDGE_VERSION_CHANGED", "KNOWLEDGE_SOURCE_SET_CHANGED", "KNOWLEDGE_CITATION_REQUIRED", "OUTPUT_CONTRACT_FAILED"]
+    },
+    {
+      "id": "project.service.knowledge.query",
+      "purpose": "Read compiled project knowledge with task relation and DingTalk source provenance",
+      "required": true,
+      "required_features": ["profile_selection", "target_identity_verification", "read_only", "compiled_content", "source_provenance", "structured_json"],
+      "input_fields": ["profile", "project", "node", "task", "platform", "topic", "from", "to", "q"],
+      "output_fields": ["target", "project", "count", "results"],
+      "side_effects": {"external_mutation": false, "may_cost_money": false, "authorization": "Authenticated access to the selected project."},
+      "errors": ["AUTH_REQUIRED", "NOT_FOUND", "PROVIDER_FAILURE"]
+    },
+    {
+      "id": "project.service.node.create",
+      "purpose": "Create and position one project board node from a compact current project snapshot",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "exact_project_resolution",
+        "exact_node_reference_resolution",
+        "server_dry_run",
+        "project_scoped_optimistic_concurrency",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": [
+        "profile",
+        "project",
+        "name",
+        "before_node",
+        "after_node",
+        "context_token",
+        "idempotency_key"
+      ],
+      "output_fields": [
+        "target",
+        "project",
+        "node",
+        "project_version",
+        "verification"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must explicitly intend to add the node. A fresh project context and server preview are required; production additionally requires CLI confirmation."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "CONTEXT_TOKEN_REQUIRED",
+        "PROJECT_STATE_CHANGED",
+        "STAGE_NAME_CONFLICT",
+        "POSITION_NODE_INVALID",
+        "CONFIRMATION_REQUIRED",
+        "OUTPUT_CONTRACT_FAILED"
+      ]
+    },
+    {
+      "id": "project.service.node.delete",
+      "purpose": "Preview and recoverably delete one project board node and its tasks, knowledge files, and records",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "impact_preview",
+        "exact_name_confirmation",
+        "project_scoped_optimistic_concurrency",
+        "dependency_policy",
+        "administrator_content_deletion",
+        "recoverable_archive",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": [
+        "profile",
+        "project",
+        "node",
+        "confirm_node",
+        "dependency_policy",
+        "idempotency_key"
+      ],
+      "output_fields": [
+        "target",
+        "deletion_id",
+        "project",
+        "node",
+        "task_count",
+        "manifest_path",
+        "retention_until",
+        "verification"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must review the current node impact and explicitly confirm its exact name. Content-bearing nodes require administrator authorization; production additionally requires CLI confirmation."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "DELETE_CONFIRMATION_MISMATCH",
+        "DEPENDENTS_EXIST",
+        "LAST_NODE_REQUIRED",
+        "PROJECT_STATE_CHANGED",
+        "DELETE_SCOPE_CHANGED",
+        "ADMIN_REQUIRED",
+        "OUTPUT_CONTRACT_FAILED"
+      ]
+    },
+    {
+      "id": "project.service.node.restore",
+      "purpose": "Preview and restore one recoverably deleted project board node from its deletion manifest",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "restore_preview",
+        "exact_name_confirmation",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": [
+        "profile",
+        "deletion_id",
+        "confirm_node",
+        "idempotency_key"
+      ],
+      "output_fields": [
+        "target",
+        "deletion_id",
+        "project",
+        "node",
+        "warnings",
+        "verification"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must review the restore preview and explicitly confirm the exact node name; production additionally requires CLI confirmation."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "RESTORE_SCOPE_MISMATCH",
+        "RESTORE_CONFIRMATION_MISMATCH",
+        "RESTORE_CONFLICT",
+        "INVALID_RESTORE_STATE",
+        "FILE_INTEGRITY",
+        "OUTPUT_CONTRACT_FAILED"
+      ]
+    },
+    {
+      "id": "project.service.task.create",
+      "purpose": "Create one task from a compact current project snapshot with server preview, project-scoped optimistic concurrency, and post-write verification",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "exact_project_resolution",
+        "exact_node_resolution",
+        "member_and_task_reference_resolution",
+        "server_dry_run",
+        "project_scoped_optimistic_concurrency",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": [
+        "profile",
+        "project",
+        "node",
+        "title",
+        "description",
+        "criteria",
+        "owner",
+        "reviewer",
+        "priority",
+        "due_date",
+        "depends_on",
+        "before_task",
+        "after_task",
+        "skill",
+        "context_token",
+        "idempotency_key"
+      ],
+      "output_fields": [
+        "target",
+        "project",
+        "task",
+        "project_version",
+        "idempotency_key",
+        "verification"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must explicitly intend to add the task. A fresh project context and server preview are required; production additionally requires CLI confirmation."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "CONTEXT_TOKEN_REQUIRED",
+        "PROJECT_STATE_CHANGED",
+        "TASK_NAME_CONFLICT",
+        "NODE_NOT_FOUND",
+        "MEMBER_NOT_FOUND",
+        "MEMBER_AMBIGUOUS",
+        "INVALID_DEPENDENCY",
+        "POSITION_TASK_INVALID",
+        "CONFIRMATION_REQUIRED",
+        "PROVIDER_FAILURE",
+        "OUTPUT_CONTRACT_FAILED"
+      ]
+    },
+    {
+      "id": "project.service.task.delete",
+      "purpose": "Preview and recoverably delete one task with exact confirmation, dependency handling, idempotency, and readback",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "compact_prewrite_snapshot",
+        "impact_preview",
+        "exact_name_confirmation",
+        "project_scoped_optimistic_concurrency",
+        "dependency_policy",
+        "recoverable_archive",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": [
+        "profile",
+        "project",
+        "task",
+        "confirm_task",
+        "dependency_policy",
+        "rewire_to",
+        "idempotency_key"
+      ],
+      "output_fields": [
+        "target",
+        "deletion_id",
+        "project",
+        "task",
+        "manifest_path",
+        "retention_until",
+        "verification"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must review the current impact preview and explicitly confirm the exact task name; production additionally requires CLI confirmation."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "DELETE_CONFIRMATION_MISMATCH",
+        "DEPENDENTS_EXIST",
+        "PROJECT_STATE_CHANGED",
+        "DELETE_SCOPE_CHANGED",
+        "ADMIN_REQUIRED",
+        "FEATURE_UNSUPPORTED",
+        "OUTPUT_CONTRACT_FAILED"
+      ]
+    },
+    {
+      "id": "project.service.trash.list",
+      "purpose": "Read recoverable task deletion batches and their manifests",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "read_only",
+        "manifest_readback",
+        "structured_json"
+      ],
+      "input_fields": ["profile", "project", "deletion_id"],
+      "output_fields": ["target", "count", "items", "manifest"],
+      "side_effects": {
+        "external_mutation": false,
+        "may_cost_money": false,
+        "authorization": "The authenticated user may read visible project recycle records."
+      },
+      "errors": ["AUTH_REQUIRED", "NOT_FOUND", "PROVIDER_FAILURE"]
+    },
+    {
+      "id": "project.service.task.restore",
+      "purpose": "Preview and restore one recoverably deleted task from its deletion manifest",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "restore_preview",
+        "exact_name_confirmation",
+        "idempotent_write",
+        "production_confirmation",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": [
+        "profile",
+        "deletion_id",
+        "confirm_task",
+        "idempotency_key"
+      ],
+      "output_fields": [
+        "target",
+        "deletion_id",
+        "project",
+        "task",
+        "warnings",
+        "verification"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must review the restore preview and explicitly confirm the exact task name; production additionally requires CLI confirmation."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "RESTORE_CONFIRMATION_MISMATCH",
+        "RESTORE_CONFLICT",
+        "INVALID_RESTORE_STATE",
+        "FILE_INTEGRITY",
+        "OUTPUT_CONTRACT_FAILED"
+      ]
+    },
+    {
+      "id": "project.service.project.create",
+      "purpose": "Create one project in the selected project-management service and verify its generated structure",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "dry_run",
+        "production_confirmation",
+        "idempotent_write",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": [
+        "profile",
+        "name",
+        "goal",
+        "type",
+        "template",
+        "sop_file",
+        "mode",
+        "idempotency_key"
+      ],
+      "output_fields": [
+        "target",
+        "project",
+        "tasks",
+        "wiki",
+        "idempotency_key"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must explicitly intend to create the project; production additionally requires CLI confirmation."
+      },
+      "errors": [
+        "CAPABILITY_UNAVAILABLE",
+        "AUTH_REQUIRED",
+        "PERMISSION_REQUIRED",
+        "PROVIDER_FAILURE",
+        "OUTPUT_CONTRACT_FAILED",
+        "PROJECT_NAME_CONFLICT",
+        "SOP_NODE_INCOMPLETE",
+        "FEATURE_UNSUPPORTED"
+      ]
+    },
+    {
+      "id": "project.service.project.delete",
+      "purpose": "Soft-delete one exactly named project as a system administrator and verify the deletion",
+      "required": true,
+      "required_features": [
+        "profile_selection",
+        "target_identity_verification",
+        "dry_run",
+        "admin_authorization",
+        "exact_name_confirmation",
+        "idempotent_write",
+        "post_write_readback",
+        "structured_json"
+      ],
+      "input_fields": ["profile", "name", "confirm_name", "idempotency_key"],
+      "output_fields": [
+        "target",
+        "project_id",
+        "project_name",
+        "deleted_at",
+        "deleted_by",
+        "recoverable",
+        "idempotency_key"
+      ],
+      "side_effects": {
+        "external_mutation": true,
+        "may_cost_money": false,
+        "authorization": "The user must explicitly intend to delete the project and the authenticated identity must have the system admin role."
+      },
+      "errors": [
+        "AUTH_REQUIRED",
+        "ADMIN_REQUIRED",
+        "DELETE_CONFIRMATION_MISMATCH",
+        "NOT_FOUND",
+        "OUTPUT_CONTRACT_FAILED"
+      ]
+    }
+  ]
+}
