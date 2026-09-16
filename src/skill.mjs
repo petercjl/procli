@@ -95,11 +95,18 @@ async function ensureSealSeekRegistration(root, destination) {
   const { workspaceManifest, pool } = sealSeekPaths(root);
   const metaFile = path.join(destination, ".install-meta.json");
   let currentMeta;
+  let metaExists = false;
   try { currentMeta = JSON.parse(await fs.readFile(metaFile, "utf8")); } catch (error) {
     if (error.code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
+    metaExists = error.code !== "ENOENT";
   }
-  if (!currentMeta?.title || !currentMeta?.description)
-    await fs.writeFile(metaFile, JSON.stringify(sealSeekDisplay, null, 2) + "\n", { flag: currentMeta ? "w" : "wx" });
+  if (currentMeta) metaExists = true;
+  const validDisplay = currentMeta?.title && currentMeta?.description &&
+    /\p{Script=Han}/u.test(currentMeta.title) && /\p{Script=Han}/u.test(currentMeta.description);
+  if (!validDisplay) {
+    if (metaExists) await fs.copyFile(metaFile, `${metaFile}.bak-procli-${Date.now()}`);
+    await fs.writeFile(metaFile, JSON.stringify(sealSeekDisplay, null, 2) + "\n", { flag: metaExists ? "w" : "wx" });
+  }
   const pkg = JSON.parse(await fs.readFile(new URL("../package.json", import.meta.url), "utf8"));
   await registerManifest(workspaceManifest, "workspace-skill-manifest.v1", pkg.version);
   await fs.mkdir(pool, { recursive: true });
