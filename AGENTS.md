@@ -1,7 +1,9 @@
 # procli Plugin Instructions
 
 - This repository is the only source for the npm-distributed `@petercjl/procli` CLI and its bundled `project-management` Skill. Do not maintain an independent Skill or CLI source in the project-service repository or Agent-specific Skill directories.
-- Codex and SealSeek use the same global CLI installation on one host. `procli skill install/update` manages discovery targets: Codex links to the npm package Skill; SealSeek uses a managed copy in the active workspace and registration metadata.
+- On the maintainer's development Mac, this Git checkout is the live source for the global `procli` command and bundled Skill. The global package path is a symlink to this checkout; Codex's `project-management` Skill link resolves here. Edit and test CLI and Skill in this checkout, then use the global `procli` entry point to verify the result.
+- Do not run `npm install -g @petercjl/procli` (including a local tarball) on the development Mac: it can replace the source link with a published or packaged snapshot. Publishing to npm for other users is separate from local installation.
+- SealSeek uses the same global CLI but needs a managed physical Skill copy. After changing the bundled Skill, run `procli skill update --agent sealseek` and check `procli skill status --agent sealseek`; do not install a second CLI for SealSeek. Other Agent Skill targets are managed by `procli skill install/update` as needed.
 - Keep configuration, login tokens, company addresses, and private project data outside the npm package. Check the package contents with `npm pack --dry-run` before publishing.
 - Before a state-dependent project write, resolve the target, read a compact project-scoped context, preview server-side, use the returned context token and one idempotency key, then verify the returned ID by readback. On `PROJECT_STATE_CHANGED`, reread context and resolve any ambiguity.
 - Run `npm test`, Skill format/portability/capability validation, and package-content inspection before release. Publish only when requested or when a release has been approved.

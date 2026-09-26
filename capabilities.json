@@ -1,9 +1,19 @@
 {
   "schemaVersion": "1",
   "name": "procli",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "defaultProfile": "nas",
   "capabilities": [
+    {
+      "id": "task.publish",
+      "command": "procli task publish",
+      "effect": "write",
+      "risk": "medium",
+      "requiredInputs": ["project", "task", "bundle"],
+      "optionalInputs": ["profile", "dwsProfile", "idempotencyKey", "recoverHtmlBlock", "repairWiki", "repairJournal", "dryRun", "yes"],
+      "supports": ["targetVerification", "contentBundle", "dingtalkDocument", "htmlAttachment", "htmlToWikiFulltext", "wikiCoverageValidation", "existingWikiRepair", "knowledgeIngest", "knowledgeCompile", "taskUpdate", "localResumeJournal", "postWriteReadback", "structuredJson"],
+      "confirmationRequired": true
+    },
     {
       "id": "directory.list",
       "command": "procli directory list",

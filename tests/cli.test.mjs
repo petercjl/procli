@@ -1552,7 +1552,8 @@ test("SealSeek installs one managed copy and registers both discovery manifests"
   assert.equal(workspace["project-management"].enabled, true);
   const pool = path.join(home, "skill_pool");
   const poolManifest = JSON.parse(await fs.readFile(path.join(pool, "skill.json"), "utf8"));
-  assert.equal(poolManifest["project-management"].current_version, "0.6.0");
+  const packageVersion = JSON.parse(await fs.readFile(path.join(packageRoot, "package.json"), "utf8")).version;
+  assert.equal(poolManifest["project-management"].current_version, packageVersion);
   assert.equal(await fs.realpath(path.join(pool, "project-management")), await fs.realpath(destination));
   const status = await run(["skill", "status", "--agent", "sealseek", "--target-dir", root]);
   assert.equal(status.json.data.current, true);

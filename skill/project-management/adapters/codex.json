@@ -4,6 +4,14 @@
   "platform": "codex",
   "mappings": [
     {
+      "capability_id": "project.service.task.publish",
+      "implementation": {"kind": "stable-cli", "discovery": "Resolve bundled procli and official dws from PATH.", "execution": "Run task publish --dry-run, inspect full-HTML-to-Wiki coverage and target, then task publish --yes with the same idempotency key; verify Wiki fulltext. Use --repair-wiki --repair-journal for an existing incomplete publication.", "normalization": "Use procli JSON."},
+      "features": ["profile_selection", "target_identity_verification", "content_bundle", "official_dws_document", "html_to_wiki_fulltext", "coverage_validation", "existing_wiki_repair", "local_resume_journal", "post_write_readback", "structured_json"],
+      "status": "implemented",
+      "permissions": ["Authenticated project write access", "Official dws document write access", "Explicit publish confirmation"],
+      "normalization": "Use procli JSON."
+    },
+    {
       "capability_id": "project.service.task.update",
       "implementation": {"kind": "stable-cli", "discovery": "Resolve the bundled procli from PATH.", "execution": "Run task update-context, preview, write, and task readback.", "normalization": "Use procli JSON."},
       "features": ["compact_prewrite_snapshot", "server_dry_run", "project_scoped_optimistic_concurrency", "idempotent_write", "post_write_readback"],

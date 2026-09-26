@@ -1,6 +1,6 @@
 {
   "name": "@petercjl/procli",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Agent-first CLI and portable Skill for SealSeek project management",
   "type": "module",
   "bin": {
@@ -37,5 +37,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/petercjl/procli.git"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   }
 }

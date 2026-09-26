@@ -15,8 +15,9 @@ import {
 } from "./config.mjs";
 import { inspectTarget, request, uploadRequest } from "./client.mjs";
 import { installSkill, skillSource, skillStatus } from "./skill.mjs";
+import { publishTask } from "./publish.mjs";
 
-const VERSION = "0.6.0";
+const VERSION = "0.7.0";
 const help = `procli ${VERSION} — Agent-first project management CLI
 
 Profile（默认 nas）：
@@ -67,6 +68,10 @@ Profile（默认 nas）：
               [--owner MEMBER] [--reviewer MEMBER] [--due-date YYYY-MM-DD|--clear-due-date]
               [--priority low|medium|high] [--description TEXT] [--criteria TEXT]
               [--progress 0..100] [--idempotency-key KEY] [--dry-run] [--yes]
+  task publish --project PROJECT_NAME --task TASK_NAME --bundle CONTENT.json
+               [--dws-profile CORP:USER] [--idempotency-key KEY]
+               [--recover-html-block BLOCK_ID] [--dry-run] [--yes]
+               [--repair-wiki --repair-journal PREVIOUS_JOURNAL.json]
   task start|submit|approve|reject --project PROJECT_NAME --task TASK_NAME
               --context-token TOKEN --task-version NUMBER [--reason TEXT]
               [--idempotency-key KEY] [--dry-run] [--yes]
@@ -124,7 +129,7 @@ export function parseArgs(argv) {
       const key = value.slice(2);
       if (
         ["json", "yes", "dry-run", "no-open", "help", "version", "reports",
-          "clear-due-date", "confirm-not-delivered"].includes(key)
+          "clear-due-date", "confirm-not-delivered", "repair-wiki"].includes(key)
       )
         options[key] = true;
       else {
@@ -551,6 +556,8 @@ export async function main(argv) {
   }
 
   const profile = resolveProfile(options, config);
+  if (group === "task" && command === "publish")
+    return output(await publishTask(options, profile));
   if (group === "doctor") {
     const checks = {
       node: {

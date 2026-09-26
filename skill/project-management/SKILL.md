@@ -9,7 +9,7 @@ Use the bundled `procli` executable as the only execution surface. Load the curr
 
 `procli` is the global explicit trigger word for this Skill. When it appears as the requested project-operation tool, route here even if the user does not mention the Skill name. Infer the operation and structured inputs from the surrounding natural language, then follow the matching main line.
 
-The logical capabilities are listed in the bundled `capabilities.json`: `project.service.directory.list`, `project.service.task.list`, `project.service.task.read`, `project.service.task.update`, `project.service.task.action`, `project.service.run.finish`, `project.service.knowledge.context`, `project.service.knowledge.index`, `project.service.knowledge.source-check`, `project.service.knowledge.reindex`, `project.service.knowledge.ingest`, `project.service.knowledge.compile`, `project.service.knowledge.query`, `project.service.node.create`, `project.service.node.delete`, `project.service.node.restore`, `project.service.task.create`, `project.service.task.delete`, `project.service.trash.list`, `project.service.task.restore`, `project.service.project.create`, and `project.service.project.delete`. If the matching adapter mapping is unresolved or unsupported, return `CAPABILITY_UNAVAILABLE`.
+The logical capabilities are listed in the bundled `capabilities.json`: `project.service.task.publish`, `project.service.directory.list`, `project.service.task.list`, `project.service.task.read`, `project.service.task.update`, `project.service.task.action`, `project.service.run.finish`, `project.service.knowledge.context`, `project.service.knowledge.index`, `project.service.knowledge.source-check`, `project.service.knowledge.reindex`, `project.service.knowledge.ingest`, `project.service.knowledge.compile`, `project.service.knowledge.query`, `project.service.node.create`, `project.service.node.delete`, `project.service.node.restore`, `project.service.task.create`, `project.service.task.delete`, `project.service.trash.list`, `project.service.task.restore`, `project.service.project.create`, and `project.service.project.delete`. If the matching adapter mapping is unresolved or unsupported, return `CAPABILITY_UNAVAILABLE`.
 
 ## Contract
 
@@ -71,9 +71,32 @@ The CLI accepts exact names, while the Skill accepts the shorter and less formal
 
 For example, a request about a folder followed by a short task topic can be resolved by composing `directory list`, `task list`, and `task get`; do not pass the folder name or short topic directly into an exact-name CLI argument.
 
+## Publish one task research package
+
+For a user-authorized task deliverable, resolve exact project and task names, prepare a UTF-8 JSON content bundle, and call `procli task publish`. The stable CLI owns DingTalk document creation, optional HTML embedding and task artifact upload, knowledge ingestion, node-current Wiki compilation, task-card summary update, local resume journal, and readback checks. Ordinary `task update` remains a field edit; it does not publish a research package.
+
+Bundle v1 fields: `schemaVersion: 1`, `title`, `summary`, and `contentMarkdown`. Without HTML, `contentMarkdown` is the human document and report-specific Wiki body by default; provide `humanMarkdown` and `knowledgeMarkdown` to tailor those audiences. When `htmlReport` is present, the CLI converts its complete visible `main` content into the report-specific Wiki Markdown, preserving headings and data-table rows; `knowledgeMarkdown` is appended as project-specific context, never substituted for the report. HTML is a human-readable attachment, while the Wiki report is the complete Agent-readable source. The CLI checks conversion coverage before writing and full Wiki readback after writing. Optional fields are `analysisDate`, `platform`, `topics`, and `workspaceId`. If the node already has knowledge sources, provide `currentMarkdown` as a synthesis preserving all active sources; cite each existing source as `[K:<knowledgeId>]` and use `[K:NEW]` for the new report. The CLI substitutes the new ID, adds a link to the Wiki report, checks all citations, and asks the service to validate the compilation. The Agent authors meaning and evidence; the CLI owns storage mechanics.
+
+```json
+{
+  "schemaVersion": 1,
+  "title": "示例品类研究",
+  "summary": "已有市场数据支持继续深研；商品与利润条件仍待验证。",
+  "contentMarkdown": "# 研究结论\n\n……",
+  "htmlReport": "./示例报告.html",
+  "analysisDate": "2026-09-26",
+  "platform": "淘宝",
+  "topics": ["示例品类", "类目机会"]
+}
+```
+
+First run `procli task publish --profile <profile> --project "<exact>" --task "<exact>" --bundle ./bundle.json --idempotency-key <uuid> --dry-run --json`. Check target, source set, file identity and planned steps. When multiple DingTalk organizations are configured, pin the intended identity with `--dws-profile CORP:USER` on both invocations. For an explicitly authorized publication, rerun the same command with `--yes` instead of `--dry-run`. Inspect `verification=publish-after-readback` and the document, artifact, knowledge, compilation and journal receipt. Resume a partial run with the same key and unchanged bundle. A DingTalk `unknown` or partial commit needs reconciliation of the returned document/block before continuing; the CLI stops rather than creating a second document. For an uncertain HTML insertion, read the document's media list through official dws, then pass its verified block ID as `--recover-html-block BLOCK_ID` with the unchanged bundle and idempotency key; the CLI confirms the ID, filename, and MIME type before continuing. Do not claim live DingTalk support from a dry run alone.
+
+For a previously published HTML report whose Wiki page lacks the full report, use `task publish --repair-wiki --repair-journal <original journal>` with the original bundle. Preview first, then execute with `--yes`. This reuses the original DingTalk source and knowledge ID, recompiles the report-specific Wiki and current page, and does not create a second document or attachment. Accept only `verification=wiki-fulltext-after-readback`, then read the Wiki report via `knowledge query --reports` to check its complete text and table rows.
+
 ## Project knowledge: ingest and answer
 
-The project service stores relationships and provenance in PostgreSQL, the employee-facing sources are DingTalk documents, and the human-and-Agent Wiki has one continuously compiled `current.md` per node plus immutable source snapshots and report-specific evidence pages. Route `index.md` → `queries/index.md` → node `current.md`; node reports and timeline are provenance, not competing default answers. The authenticated `dws` readback is used for ingestion and source freshness checks. Report the latest recorded check time and `current|stale` status; checking happens on demand.
+The project service stores relationships and provenance in PostgreSQL, the employee-facing sources are DingTalk documents, and the Agent-readable Wiki has one continuously compiled `current.md` per node plus immutable source snapshots and full report-specific evidence pages. Route `index.md` → `queries/index.md` → node `current.md`; read its linked Wiki report when detailed evidence is needed. An Agent normally answers from Wiki content alone; read the HTML or DingTalk source only when the user asks to inspect it or a source-verification task requires it. The authenticated `dws` readback is used for ingestion and source freshness checks. Report the latest recorded check time and `current|stale` status; checking happens on demand.
 
 ### Check a DingTalk knowledge source
 
@@ -119,7 +142,7 @@ For a question such as “用 procli，帮我看看 ERM 保温杯的市场调研
 procli knowledge query --project "<exact project>" --node "<exact node>" --json
 ```
 
-The default node query returns the one compiled page and `compilationStatus=current|stale|missing`. If stale or missing, say that the summary needs compilation before presenting it as current knowledge. Use `--reports` and `--platform`, `--topic`, `--from`, or `--to` when the user asks for an original report, period comparison, or source verification; `--task` selects one exact task and `--q` filters content. Report task state separately from knowledge conclusions. Cite the original documents and observation windows behind material claims, distinguish real evidence from illustrative inputs, and say that live freshness was not checked. If no compiled knowledge matches, say so; `task get` is not a substitute for knowledge content. Never read service database, Markdown files, webpage DOM, or a different Profile to fill a gap.
+The default node query returns the one compiled page and `compilationStatus=current|stale|missing`. If stale or missing, say that the summary needs compilation before presenting it as current knowledge. Use `--reports` and `--platform`, `--topic`, `--from`, or `--to` whenever a question needs the report's detailed evidence or full tables; `--task` selects one exact task and `--q` filters content. These are Wiki reads, not fallback reads from HTML. Report task state separately from knowledge conclusions. Cite the original documents and observation windows behind material claims, distinguish real evidence from illustrative inputs, and say that live freshness was not checked. If no compiled knowledge matches, say so; `task get` is not a substitute for knowledge content. Never read service database, Markdown files, webpage DOM, or a different Profile to fill a gap.
 
 When the user asks to repair or rebuild the Wiki navigation after a code/schema change, first read `procli knowledge index --project "<project>" --json` for its current `contextToken`. Preview `procli knowledge reindex --project "<project>" --context-token "<token>" --dry-run --json`, inspect path moves and counts, then execute with the same token and one idempotency key. Production requires `--yes`. Accept only `knowledge-index-after-readback`. This rebuilds generated indexes and links while preserving raw source snapshots and the prior compiled path as a readable legacy file.
 

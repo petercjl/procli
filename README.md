@@ -172,3 +172,35 @@ procli project delete --name "新品验证" --confirm-name "新品验证" --yes
 店铺项目和企业项目已保留为后续能力，目前 CLI 会返回 `FEATURE_UNSUPPORTED`。
 
 配置和每个 Profile 的个人凭证保存在用户配置目录，不进入 npm 包或项目仓库。运行 `procli doctor --json` 查看当前 Profile、服务指纹和认证状态。
+
+## 一次提交任务研究成果
+
+`procli task publish` 接收一份 JSON 内容包，创建并回读钉钉文档，把可选 HTML 报告嵌入文档并上传为任务附件，写入报告专属 Wiki 知识、编译节点当前知识，最后更新任务卡摘要。步骤结果保存在用户配置目录的 `publish/` 日志中；用同一幂等键和同一内容包续传。
+
+```json
+{
+  "schemaVersion": 1,
+  "title": "示例品类研究",
+  "summary": "市场数据支持继续深研；商品与利润条件待验证。",
+  "contentMarkdown": "# 研究结论\n\n有依据的正文。",
+  "htmlReport": "./示例报告.html",
+  "analysisDate": "2026-09-26",
+  "platform": "淘宝",
+  "topics": ["示例品类", "类目机会"]
+}
+```
+
+没有 HTML 时，`contentMarkdown` 默认同时用于钉钉正文和报告专属 Wiki；可分别提供 `humanMarkdown`、`knowledgeMarkdown`。提供 `htmlReport` 时，CLI 会把 HTML `main` 中的完整可见报告转为 Wiki Markdown，保留标题与全部数据表行，并将 `knowledgeMarkdown` 作为项目补充附在全文之后。写前检查转换覆盖，写后回读核对 Wiki 全文；HTML 仍作为给人看的附件。若节点已有知识来源，内容包还须提供融合旧来源的 `currentMarkdown`，其中以 `[K:现有来源ID]` 引用旧来源，以 `[K:NEW]` 引用本次新增来源。节点当前页会链接到 Wiki 全文，Agent 可以只读取 Wiki 获取细节。
+
+```bash
+procli task publish --profile local --project "示例项目" --task "确认商品目标与立项" \
+  --bundle ./bundle.json --idempotency-key <UUID> --dry-run --json
+procli task publish --profile local --project "示例项目" --task "确认商品目标与立项" \
+  --bundle ./bundle.json --idempotency-key <同一UUID> --yes --json
+```
+
+正式执行会修改钉钉和项目服务，必须显式添加 `--yes`。多组织钉钉账号可用 `--dws-profile CORP:USER` 固定文档操作身份。`--dry-run` 只检查内容与计划，不创建文档，也不代替正式执行时逐步调用的服务端预览。
+
+若 HTML 插入回执不确定，先按记录的文档 ID 核对正文媒体列表；确认真实的 `blockId`、文件名和类型后，使用相同幂等键加 `--recover-html-block BLOCK_ID --yes` 续传。CLI 会回读核对区块，不会再次插入附件。
+
+修复旧提交中不完整的 Wiki 时，使用原内容包及原提交记录，先加 `--repair-wiki --repair-journal <原记录路径> --dry-run` 检查，再以 `--yes` 执行。此模式在原知识 ID 上回填完整报告并重新编译当前页，不新建钉钉文档或重复上传附件。

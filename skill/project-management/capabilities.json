@@ -5,6 +5,16 @@
   "target_platforms": ["codex", "sealseek"],
   "capabilities": [
     {
+      "id": "project.service.task.publish",
+      "purpose": "Submit one research content bundle to a DingTalk document, task evidence, report-specific Wiki knowledge and compiled current knowledge",
+      "required": true,
+      "required_features": ["profile_selection", "target_identity_verification", "content_bundle", "official_dws_document", "html_to_wiki_fulltext", "coverage_validation", "existing_wiki_repair", "local_resume_journal", "post_write_readback", "structured_json"],
+      "input_fields": ["profile", "project", "task", "bundle", "idempotency_key"],
+      "output_fields": ["target", "project", "task", "document", "knowledge", "compiled", "verification", "journal"],
+      "side_effects": {"external_mutation": true, "may_cost_money": false, "authorization": "Explicit publish intent and --yes; authenticated project and DingTalk write access."},
+      "errors": ["PUBLISH_BUNDLE_INVALID", "PUBLISH_HTML_CONTENT_INVALID", "PUBLISH_HTML_COVERAGE_FAILED", "PUBLISH_REPAIR_UNAVAILABLE", "PUBLISH_CURRENT_REQUIRED", "DWS_COMMIT_UNCERTAIN", "PROJECT_STATE_CHANGED", "OUTPUT_CONTRACT_FAILED"]
+    },
+    {
       "id": "project.service.task.update",
       "purpose": "Edit task metadata and in-progress percentage from a fresh task snapshot",
       "required": true,
